@@ -1,20 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useState } from "react";
 
 const getSuper = () => {
   return axios.get("http://localhost:4000/superheroes");
 };
+const addHero = (hero) => {
+  return axios.post("http://localhost:4000/superheroes", hero);
+};
 
 export const RQSuperHeroesPage = () => {
-  // 更多状态请参考 https://tanstack.com/query/v4/docs/reference/useQuery
-  const { isLoading, data, isError, error, isFetching } = useQuery(
+  const { isLoading, data, isError, error, refetch } = useQuery(
     ["super"],
     getSuper
   );
+  const { mutate } = useMutation(addHero);
+  const [heroInfo, setHeroInfo] = useState({ name: "", alterEgo: "" });
 
-  console.log(isLoading, isFetching);
-  // isLoading 和 isFetch 的区别在于  isLoading  更多是在没有缓存的条件下 第一次请求数据做的。
-  // isFetching 表现在请求，即 只要请求就有状态改变。
+  const onSubmit = () => {
+    console.log({ ...heroInfo });
+    mutate({ ...heroInfo });
+    setHeroInfo({ name: "", alterEgo: "" });
+  };
   if (isLoading) {
     return <h2>Loading...</h2>;
   }
@@ -27,6 +34,31 @@ export const RQSuperHeroesPage = () => {
   return (
     <>
       <h2>Super Heroes Page</h2>
+      <input
+        value={heroInfo.name}
+        type="text"
+        placeholder="name"
+        onChange={(value) => {
+          setHeroInfo((state) => ({
+            ...state,
+            name: value.target.value,
+          }));
+        }}
+      />
+      <input
+        type="text"
+        value={heroInfo.alterEgo}
+        placeholder="alterEgo"
+        onChange={(value) => {
+          setHeroInfo((state) => ({
+            ...state,
+            alterEgo: value.target.value,
+          }));
+        }}
+      />
+      <button onClick={() => onSubmit()}>addHero</button>
+      <button onClick={refetch}>fetching</button>
+
       {data?.data.map((hero) => {
         return <div key={hero.id}>{hero.name}</div>;
       })}
