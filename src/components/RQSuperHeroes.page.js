@@ -1,35 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { useState } from "react";
 
-const getSuper = () => {
-  return axios.get("http://localhost:4000/superheroes");
+const getSuper = (page) => {
+  // serve-json 规则
+  return axios.get(`http://localhost:4000/colors?_limit=2&_page=${page}`);
 };
 
 export const RQSuperHeroesPage = () => {
-  // 更多状态请参考 https://tanstack.com/query/v4/docs/reference/useQuery
-  const { isLoading, data, isError, error, isFetching } = useQuery(
-    ["super"],
-    getSuper
+  const [page, setPage] = useState(1);
+  const { isLoading, data, isFetching, isPreviousData } = useQuery(
+    ["color", page],
+    () => getSuper(page),
+    {
+      keepPreviousData: true, // 保留上次数据,如果没有设置这个属性，你每次加载新需求将会从loading为true
+    }
   );
 
-  console.log(isLoading, isFetching);
-  // isLoading 和 isFetch 的区别在于  isLoading  更多是在没有缓存的条件下 第一次请求数据做的。
-  // isFetching 表现在请求，即 只要请求就有状态改变。
   if (isLoading) {
-    return <h2>Loading...</h2>;
-  }
-
-  if (isError) {
-    // 如果错误，就展示错误信息
-    return <h2>{error.message}</h2>;
+    return <h2>isLoading...</h2>;
   }
 
   return (
     <>
-      <h2>Super Heroes Page</h2>
-      {data?.data.map((hero) => {
-        return <div key={hero.id}>{hero.name}</div>;
+      <h2>Colors Page</h2>
+      {data?.data.map((color) => {
+        return <div key={color.id}>{color.label}</div>;
       })}
+      <button disabled={page <= 1} onClick={() => setPage((page) => page - 1)}>
+        getPrePage
+      </button>
+      <button disabled={page >= 4} onClick={() => setPage((page) => page + 1)}>
+        getNextPage
+      </button>
+
+      <h2>{isFetching ? "isFetching" : ""}</h2>
+      <h2>{isPreviousData.toString()}</h2>
     </>
   );
 };
