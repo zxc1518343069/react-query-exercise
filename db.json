@@ -15,5 +15,18 @@
       "name": "Wonder Woman",
       "alterEgo": "Princess Diana"
     }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Achen",
+      "channelId": 1
+    }
+  ],
+  "channels": [
+    {
+      "id": 1,
+      "courses": ["react", "vue", "angular"]
+    }
   ]
 }
