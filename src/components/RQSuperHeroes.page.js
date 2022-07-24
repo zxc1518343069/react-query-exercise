@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
 
@@ -14,11 +14,25 @@ export const RQSuperHeroesPage = () => {
     ["super"],
     getSuper
   );
-  const { mutate } = useMutation(addHero);
+  const clint = useQueryClient();
+  const { mutate } = useMutation(addHero, {
+    onSuccess: (addDate) => {
+      // 作用 告诉缓存这个key值得缓存无效，重新获取数据
+      // clint.invalidateQueries("super");
+
+      // 作用，重新设置 缓存key 的值。
+      // 在某些场景下 add 值被返回，直接设置进缓存中，可以减少一次网络请求
+      clint.setQueryData(["super"], (oldData) => {
+        return {
+          ...oldData,
+          data: [...oldData.data, addDate.data],
+        };
+      });
+    },
+  });
   const [heroInfo, setHeroInfo] = useState({ name: "", alterEgo: "" });
 
   const onSubmit = () => {
-    console.log({ ...heroInfo });
     mutate({ ...heroInfo });
     setHeroInfo({ name: "", alterEgo: "" });
   };
