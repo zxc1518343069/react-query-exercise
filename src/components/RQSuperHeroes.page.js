@@ -14,20 +14,31 @@ export const RQSuperHeroesPage = () => {
     ["super"],
     getSuper
   );
-  const clint = useQueryClient();
+  const queryClient = useQueryClient();
   const { mutate } = useMutation(addHero, {
-    onSuccess: (addDate) => {
-      // 作用 告诉缓存这个key值得缓存无效，重新获取数据
-      // clint.invalidateQueries("super");
-
-      // 作用，重新设置 缓存key 的值。
-      // 在某些场景下 add 值被返回，直接设置进缓存中，可以减少一次网络请求
-      clint.setQueryData(["super"], (oldData) => {
-        return {
-          ...oldData,
-          data: [...oldData.data, addDate.data],
-        };
-      });
+    onMutate: async (addHero) => {
+      // 取消传出的刷新状态。保证数据不会被覆盖
+      await queryClient.cancelQueries(["super", { exact: true }]);
+      const previousValue = queryClient.getQueryData(["super"]);
+      queryClient.setQueryData(["super"], (old) => ({
+        ...old,
+        data: [
+          ...old.data,
+          Object.assign(
+            { ...addHero },
+            {
+              id: old?.data?.length + 1,
+            }
+          ),
+        ],
+      }));
+      // 一定要返回
+      return previousValue;
+    },
+    onError: (err, variables, previousValue) =>
+      queryClient.setQueryData(["super"], previousValue),
+    onSettled: () => {
+      queryClient.invalidateQueries(["super"]);
     },
   });
   const [heroInfo, setHeroInfo] = useState({ name: "", alterEgo: "" });
